@@ -1,0 +1,4 @@
+This directory contains the design for a hybrid FPGA board that can be
+used both stand along as well as together with a packplane. The board
+features two Xilinx Spartan 6 XC6SLX150-3FGG484C and one TI MSP430F55xx
+MCU.
