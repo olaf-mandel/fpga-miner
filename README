@@ -1,0 +1,11 @@
+This project is concerned with mining Bitcoins via FPGAs.
+For Details, see:
+
+FPGA-Firmware:
+http://forum.bitcoin.org/index.php?topic=9047.0
+
+Hardware:
+http://forum.bitcoin.org/index.php?topic=9047.0
+
+The subdirectories (will at some unspecified point in the future) contain the
+design files for the mining hardware, the firmware and the software.
