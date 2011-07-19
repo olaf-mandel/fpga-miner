@@ -3,16 +3,11 @@ This directory is reserved for the hardware design.
 Current contents:
 
 * FPGAcomp.lib    : Eagle library containing custom components for design
+* pcbcart.dru     : Eagle design rules file applied to the board
 * FPGA_pin_demo.* : A design with two XC6SLX150 in the FGG484 package. No
                     power supply, interface logic or connectors.
 
 The FPGA_pin_demo shows how to connect the different parts of the FPGA and
-routes all signals on a 2-layer PCB. The minimum sizes are compatible with
-the "standard" PCB-Pool restrictions.
+routes all signals on a 4-layer PCB. The minimum sizes are taken from the
+discussion on the forum.
 
-TODO:
-
-* There is a choke-point on the bottom layer in the middle of each FPGA:
-  the polygon is too narrow for 5A or more. Need to route some VCCaux
-  pins on the top layer, over unused pins of the FPGA.
-* No 4-eyes check run, yet. Second opinion needed.
