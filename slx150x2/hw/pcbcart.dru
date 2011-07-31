@@ -1,4 +1,4 @@
-description[de] = \n<b>pcbcart 4-layer board</b>\n<p>Corresponds to the following settings:</p>\n<table>\n<tr>\n<th>Setting</th>\n<th>Value</th>\n</tr>\n<tr>\n<td>Layers</td>\n<td>4</td>\n</tr>\n<tr>\n<td>Thickness (Finished Board)</td>\n<td>1.2 mm</td>\n</tr>\n<tr>\n<td>Layer Stack</td>\n<td>As pcbcard default</td>\n</tr>\n<tr>\n<td>Outer Layer Copper Weight (Finished)</td>\n<td>35 um</td>\n</tr>\n<tr>\n<td>Inner Layer Copper Weight</td>\n<td>35 um</td>\n</tr>\n<tr>\n<td>Min. Tracing/Spacing</td>\n<td>0.15 mm</td>\n</tr>\n<tr>\n<td>Min. Annular Ring</td>\n<td>0.10 mm</td>\n</tr>\n<tr>\n<td>Smallest Holes</td>\n<td>0.30 mm</td>\n</tr>\n<tr>\n<td>Buried/Blind Vias</td>\n<td>No</td>\n</tr>\n</table>\n
+description[de] = \n\n<b>pcbcart 4-layer board</b>\n<p>Corresponds to the following settings:</p>\n<table>\n<tr>\n<th>Setting</th>\n<th>Value</th>\n</tr>\n<tr>\n<td>Layers</td>\n<td>4</td>\n</tr>\n<tr>\n<td>Thickness (Finished Board)</td>\n<td>1.2 mm</td>\n</tr>\n<tr>\n<td>Layer Stack</td>\n<td>As pcbcard default</td>\n</tr>\n<tr>\n<td>Outer Layer Copper Weight (Finished)</td>\n<td>35 um</td>\n</tr>\n<tr>\n<td>Inner Layer Copper Weight</td>\n<td>35 um</td>\n</tr>\n<tr>\n<td>Min. Tracing/Spacing</td>\n<td>0.15 mm</td>\n</tr>\n<tr>\n<td>Min. Annular Ring</td>\n<td>0.10 mm</td>\n</tr>\n<tr>\n<td>Smallest Holes</td>\n<td>0.30 mm</td>\n</tr>\n<tr>\n<td>Buried/Blind Vias</td>\n<td>No</td>\n</tr>\n</table>\n
 layerSetup = (1+2*15+16)
 mtCopper = 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm 0.035mm
 mtIsolate = 0.1mm 0.86mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.2mm 0.15mm 0.1mm
@@ -13,7 +13,7 @@ mdSmdVia = 0.15mm
 mdSmdSmd = 0.15mm
 mdViaViaSameLayer = 0.2mm
 mnLayersViaInSmd = 2
-mdCopperDimension = 0.3mm
+mdCopperDimension = 0.1mm
 mdDrill = 0.2mm
 mdSmdStop = 0mil
 msWidth = 0.15mm
