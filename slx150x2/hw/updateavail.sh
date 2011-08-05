@@ -104,10 +104,9 @@ function abort(msg) {
 function sort(a, k,    n, t, i, j) {
     n = 0;
     for(i in a) {
-        k[n] = i;
-        n++;
+        k[n++] = i;
     }
-    for(i=1; i<n; i++)
+    for(i=1; i<n; ++i)
         for(j=n-1; j>=i; j--)
             if(a[k[j-1]]>a[k[j]]) {
                 t      = k[j];
@@ -138,9 +137,8 @@ function aindex2(a, j, x,    k) {
 function find_break(j, break0,    k) {
     k = aindex2(breaks, j, break0);
     if(k == "") {
-        k = n_breaks[j];
+        k = n_breaks[j]++;
         breaks[j, k] = break0;
-        n_breaks[j]++;
     }
     return k;
 }
@@ -151,13 +149,14 @@ function find_break(j, break0,    k) {
 # and prices[i, j, *].
 function query_DigiKey(i, j,    url, cmd, in_price_table, this_break, \
     this_price, k) {
+    if(ordercodes[i, j] == "")
+        return;
     if(unit == "EUR")
         url = "http://search.digikey.de/scripts/DkSearch/dksus.dll?" \
-            "Detail&site=de;lang=de&name=";
+            "Detail&site=de;lang=de&name=" ordercodes[i, j];
     else
         url = "http://search.digikey.de/scripts/DkSearch/dksus.dll?" \
-            "Detail&name=";
-    url = url ordercodes[i, j];
+            "Detail&name=" ordercodes[i, j];
     cmd = "wget --output-document=- --quiet \"" url "\"";
     in_price_table = false;
     while((cmd | getline) == 1) {
@@ -167,6 +166,7 @@ function query_DigiKey(i, j,    url, cmd, in_price_table, this_break, \
                 availables[i, j]);
             gsub("<.*", "", availables[i, j]);
             gsub("[,.]", "", availables[i, j]);
+            availables[i, j] = availables[i, j] + 0;
         }
         if($0 ~ "<table [^>]*id=pricing")
             in_price_table = 1;
@@ -180,7 +180,7 @@ function query_DigiKey(i, j,    url, cmd, in_price_table, this_break, \
             gsub("</td>.*", "", this_price);
             gsub("[,.]", "", this_break);
             gsub("[,.]", ".", this_price);
-            k = find_break(j, this_break);
+            k = find_break(j, this_break + 0);
             prices[i, j, k] = this_price;
         }
         if($0 ~ "</table>")
@@ -193,8 +193,127 @@ function query_DigiKey(i, j,    url, cmd, in_price_table, this_break, \
 # Reads in the webpage for the Avnet ordercodes(i, j) and stores the
 # results in the global variables availables[i, j], n_breaks[j], breaks[j, *]
 # and prices[i, j, *].
-function query_Avnet(i, j,    k) {
-    #TBD
+function query_Avnet(i, j,    url, cookies, cmd, n_subcats, subcats, subcat, s,
+    found_it, in_row, expect_pn, in_price, expect_avail, pn, price, \
+    this_break, this_price, k, avail) {
+    if(ordercodes[i, j] == "")
+        return;
+    url = "http://avnetexpress.avnet.com/store/em/EMController?N=0&" \
+        "action=products&term=" ordercodes[i, j];
+    cmd = "mktemp";
+    cmd | getline cookies;
+    close(cmd);
+    cmd = "wget --output-document=- --keep-session-cookies --save-cookies " \
+        cookies " --quiet \"" url "\"";
+    n_subcats  = 0;
+    no_subcats = false;
+    while((cmd | getline) == 1) {
+        if($0 ~ "<a class=\"medium\"[^>]*href=\"[^\"]*\"") {
+            subcat = $0;
+            gsub(".*<a class=\"medium\"[^>]*href=\"", "", subcat);
+            gsub("\".*", "", subcat);
+            gsub("&amp;", "\\&", subcat);
+            if(subcat !~ "^[a-zA-Z]*://")
+                if(subcat ~ "^/")
+                    subcat = "http://avnetexpress.avnet.com" subcat;
+                else
+                    subcat = "http://avnetexpress.avnet.com/store/em/" subcat;
+            subcats[n_subcats++] = subcat;
+        }
+        if($0 ~ "id=\"resultsTbl1\"") {
+            subcats[0] = url;
+            n_subcats  = 1;
+            break;
+        }
+    }
+    close(cmd);
+    found_it = false;
+    for(s in subcats) {
+        subcat = subcats[s];
+        gsub("&", "%26", subcat);
+        gsub("/", "%2F", subcat);
+        gsub(":", "%3A", subcat);
+        gsub("=", "%3D", subcat);
+        gsub("\\?", "%3F", subcat);
+        url = "http://avnetexpress.avnet.com/store/em/SetCurrencyPreference?" \
+            "displayCurrency=" unit "&URL=" subcat;
+        cmd = "wget --output-document=- --load-cookies " cookies \
+            " --quiet \"" url "\"";
+        in_row       = false;
+        expect_pn    = false;
+        in_price     = false;
+        expect_avail = false;
+        while((cmd | getline) == 1) {
+            if($0 ~ "<tr[^>]*id=\"row_[0-9]*\"")
+                in_row = true;
+            if(expect_pn) {
+                pn = $0;
+                gsub("^[ 	]*", "", pn);
+                gsub("<br/>.*", "", pn);
+                gsub("\r$", "", pn);
+                if(pn != ordercodes[i, j])
+                    in_row = false;
+                expect_pn = false;
+            }
+            if(in_row && $0 ~ "id=\"row_[0-9]*_partNumber\"")
+                expect_pn = true;
+            if(in_row && $0 ~ "class=\"small partNotAvailableInRegion\"") {
+                in_row = false;
+            }
+            if(in_row && $0 ~ "style=\"white-space:nowrap;vertical-align:" \
+                "top;text-align:right;padding-right:3px; \"")
+                in_price = true;
+            if(in_price && $0 ~ "<div.*<br></div>") {
+                price = $0;
+                gsub(".*<div[^>]*>", "", price);
+                gsub("<br></div>.*", "", price);
+                if(price ~ "<br>")
+                    while(price != "") {
+                        this_break = price;
+                        gsub("-.*", "", this_break);
+                        gsub("\\+$", "", this_break);
+                        this_price = price;
+                        gsub("<br>.*", "", this_price);
+                        gsub(".*-", "", this_price);
+                        gsub("[$€]", "", this_price);
+                        k = find_break(j, this_break + 0);
+                        prices[i, j, k] = this_price;
+                        if(price ~ "<br>")
+                            gsub("^[^<]*<br>", "", price);
+                        else
+                            price = "";
+                    }
+                else {
+                    this_break = 1;
+                    this_price = price;
+                    gsub("[$€]", "", this_price);
+                    k = find_break(j, this_break);
+                    prices[i, j, k] = this_price;
+                }
+                in_price = false;
+            }
+            if(expect_avail && $0 ~ "<br/>") {
+                avail = $0;
+                gsub("^[ 	]*", "", avail);
+                gsub("<br/>.*", "", avail);
+                gsub("&nbsp;", " ", avail);
+                gsub("Stock", "", avail);
+                gsub("No *", "0", avail);
+                availables[i, j] = avail + 0;
+                found_it = true;
+                break;
+            }
+            if(in_row && $0 ~ "style=\"white-space:nowrap;vertical-align:" \
+                "top;text-align:center; \"")
+                expect_avail = true;
+            if($0 ~ "</tr>")
+                in_row = false;
+        }
+        close(cmd);
+        if(found_it)
+            break;
+    }
+    system("rm " cookies);
 }
 
 
@@ -216,7 +335,7 @@ BEGIN {
 NR == 1 {
     if($1 != "Key")
         abort("First columns header must be \"Key\"");
-    for(i=2; i<=NF; i++)
+    for(i=2; i<=NF; ++i)
         for(j in suppl)
             if($i == suppl[j])
                 if(j in cols)
@@ -240,7 +359,7 @@ END {
     if(failed)
         exit 1;
     # Query supplier webpages
-    for(i=0; i<NR-1; i++)
+    for(i=0; i<NR-1; ++i)
         for(j in cols)
             if(suppl[j] == "DigiKey")
                 query_DigiKey(i, j);
@@ -248,21 +367,22 @@ END {
                 query_Avnet(i, j);
     # Output results
     n = sort(breaks, s);
+
     printf "Keys";
     for(j in cols) {
         printf "%s%s%s%s", OFS, suppl[j], OFS, suppl[j] "_Avail";
-        for(k=0; k<n; k++) {
+        for(k=0; k<n; ++k) {
             if(s[k] !~ "^" j SUBSEP)
                 continue;
             printf "%s%s", OFS, suppl[j] "_" breaks[s[k]];
         }
     }
     printf ORS;
-    for(i=0; i<NR-1; i++) {
+    for(i=0; i<NR-1; ++i) {
         printf "%s", keys[i];
         for(j in cols) {
             printf "%s%s%s%s", OFS, ordercodes[i, j], OFS, availables[i, j];
-            for(k=0; k<n; k++) {
+            for(k=0; k<n; ++k) {
                 if(s[k] !~ "^" j SUBSEP)
                     continue;
                 printf "%s%s", OFS, prices[i, s[k]];
