@@ -91,7 +91,6 @@ exit_trap() {
 # fillit : Reads a table from stdin and write a modified table to stdout
 # The monetary unit is given as $1.
 fillit() {
-echo $1
     awk  -W posix -F '\t' -v unit=$1 '
 # Write an error message and then exit AWK
 function abort(msg) {
